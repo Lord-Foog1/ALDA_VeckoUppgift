@@ -29,52 +29,62 @@ package alda.t3.bst;
 
 public class BinarySearchTreeNode<T extends Comparable<T>> {
 
-	/*
-	 * The @SuppressWarnings below *SHOULD* be removed.
-	 */
-	
-	@SuppressWarnings("unused")
 	private T data;
-	@SuppressWarnings("unused")
+
 	private BinarySearchTreeNode<T> left;
-	@SuppressWarnings("unused")
+
 	private BinarySearchTreeNode<T> right;
+
 
 	public BinarySearchTreeNode(T data) {
 		this.data = data;
 	}
 
+
 	public boolean add(T data) {
-		if(data.compareTo(this.data) <= 0 && left == null) {
+		if(data.compareTo(this.data) < 0 && left == null) {
 			left = new BinarySearchTreeNode<>(data);
 			return true;
 		}
-		if(data.compareTo(this.data) >= 0 && right == null) {
+		if(data.compareTo(this.data) > 0 && right == null) {
 			right = new BinarySearchTreeNode<>(data);
 			return true;
 		}
-		if(data.compareTo(this.data) <= 0 && left != null) {
+		if(data.compareTo(this.data) < 0 && left != null) {
 			return left.add(data);
 		}
-		if(data.compareTo(this.data) >= 0 && right != null) {
+		if(data.compareTo(this.data) > 0 && right != null) {
 			return right.add(data);
 		}
 		return false;
 	}
 
-	/*
-	 * The @SuppressWarnings below *SHOULD* be removed.
-	 */
-	@SuppressWarnings("unused")
 	private T findMin() {
-		return null;
+		if(left == null) {
+			return this.data;
+		}
+		else {
+			return left.findMin();
+		}
 	}
 
 	public BinarySearchTreeNode<T> remove(T data) {
+		if(data.compareTo(this.data) == 0) {
+			return this;
+		}
 		return null;
 	}
 
 	public boolean contains(T data) {
+		if(this.data == data) {
+			return true;
+		}
+		if(data.compareTo(this.data) < 0 && left != null) {
+			return left.contains(data);
+		}
+		if(data.compareTo(this.data) > 0 && right != null) {
+			return right.contains(data);
+		}
 		return false;
 	}
 
