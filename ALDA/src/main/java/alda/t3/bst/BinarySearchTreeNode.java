@@ -69,8 +69,32 @@ public class BinarySearchTreeNode<T extends Comparable<T>> {
 	}
 
 	public BinarySearchTreeNode<T> remove(T data) {
-		if(data.compareTo(this.data) == 0) {
-			return this;
+		if(left != null && left.data.compareTo(data) == 0) {
+			if(left.right == null && left.left == null) {
+				left = null;
+			}
+			else if(left.right != null && left.left != null) {
+				left.right.left = left.left;
+				left = left.right;
+			}
+			return null;
+		}
+		if(right != null && right.data.compareTo(data) == 0) {
+			if(right.right == null && right.left == null) {
+				right = null;
+			}
+			else if(right.left != null && right.right != null) {
+				right.right.left = right.left;
+				right = right.right;
+			}
+			return null;
+		}
+
+		if(left != null && data.compareTo(this.data) < 0) {
+			left.remove(data);
+		}
+		if(right != null && data.compareTo(this.data) > 0) {
+			right.remove(data);
 		}
 		return null;
 	}
@@ -89,14 +113,54 @@ public class BinarySearchTreeNode<T extends Comparable<T>> {
 	}
 
 	public int size() {
-		return 0;
+		int num = 0;
+
+		if(left != null) {
+			num += left.size();
+		}
+		if(right != null) {
+			num += right.size();
+		}
+
+		num++;
+
+		return num;
 	}
 
 	public int depth() {
-		return -1;
+		int depth = -1;
+		int current = -1;
+
+		if(right == null && left == null) {
+			return current;
+		}
+
+		if(left != null) {
+			current += left.depth();
+		}
+		if(right != null) {
+			current += right.depth();
+		}
+
+		if(current > depth) {
+			depth = current;
+		}
+
+		return depth;
 	}
 
 	public String toString() {
-		return "";
+		String sum = "";
+
+		sum += data + ", ";
+
+		if(left != null) {
+			sum += left.toString();
+		}
+		if(right != null) {
+			sum += right.toString();
+		}
+
+		return sum;
 	}
 }
