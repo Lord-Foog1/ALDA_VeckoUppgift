@@ -69,34 +69,36 @@ public class BinarySearchTreeNode<T extends Comparable<T>> {
 	}
 
 	public BinarySearchTreeNode<T> remove(T data) {
-		if(left != null && left.data.compareTo(data) == 0) {
-			if(left.right == null && left.left == null) {
-				left = null;
+		if(data.compareTo(this.data) < 0) {
+			if(left != null) {
+				left = left.remove(data);
 			}
-			else if(left.right != null && left.left != null) {
-				left.right.left = left.left;
-				left = left.right;
-			}
-			return null;
+			return this;
 		}
-		if(right != null && right.data.compareTo(data) == 0) {
-			if(right.right == null && right.left == null) {
-				right = null;
+
+		if(data.compareTo(this.data) > 0) {
+			if(right != null) {
+				right = right.remove(data);
 			}
-			else if(right.left != null && right.right != null) {
-				right.right.left = right.left;
-				right = right.right;
-			}
+			return this;
+		}
+
+		if(left == null && right == null) {
 			return null;
 		}
 
-		if(left != null && data.compareTo(this.data) < 0) {
-			left.remove(data);
+		if(left == null) {
+			return right;
 		}
-		if(right != null && data.compareTo(this.data) > 0) {
-			right.remove(data);
+		if(right == null) {
+			return left;
 		}
-		return null;
+
+		T minVal = right.findMin();
+		this.data = minVal;
+		right = right.remove(minVal);
+
+		return this;
 	}
 
 	public boolean contains(T data) {
@@ -128,39 +130,29 @@ public class BinarySearchTreeNode<T extends Comparable<T>> {
 	}
 
 	public int depth() {
-		int depth = -1;
-		int current = -1;
+		int leftDepth = (left == null) ? -1 : left.depth();
+		int rightDepth = (right == null) ? -1 : right.depth();
 
-		if(right == null && left == null) {
-			return current;
-		}
-
-		if(left != null) {
-			current += left.depth();
-		}
-		if(right != null) {
-			current += right.depth();
-		}
-
-		if(current > depth) {
-			depth = current;
-		}
-
-		return depth;
+		return 1 + Math.max(leftDepth, rightDepth);
 	}
 
 	public String toString() {
-		String sum = "";
-
-		sum += data + ", ";
+		String results = "";
 
 		if(left != null) {
-			sum += left.toString();
-		}
-		if(right != null) {
-			sum += right.toString();
+			results += left.toString();
 		}
 
-		return sum;
+		if(!results.isEmpty()) {
+			results += ", ";
+		}
+
+		results += this.data;
+
+		if(right != null) {
+			results += ", " + right.toString();
+		}
+
+		return results;
 	}
 }

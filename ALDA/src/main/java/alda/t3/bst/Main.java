@@ -14,7 +14,7 @@ public class Main {
         tree.add("75");
 
 
-        System.out.println(tree);
+        System.out.println(tree.depth());
 
     }
 }
