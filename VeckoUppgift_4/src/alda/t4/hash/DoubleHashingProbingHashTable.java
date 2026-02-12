@@ -9,7 +9,18 @@ public class DoubleHashingProbingHashTable<T> extends ProbingHashTable<T> {
 	 */
 	@Override
 	protected int findPos(T x) {
-		return 0;
+		int val = myhash(x);
+
+		int otherVal = smallerPrimeThanCapacity() - (myhash(x) % smallerPrimeThanCapacity());
+
+		for(int i = 0; i < capacity(); i++) {
+			int sum = (val + i * otherVal) % capacity();
+			if(!continueProbing(sum, x)) {
+				return sum;
+			}
+		}
+
+		return -1;
 	}
 
 	/*

@@ -22,6 +22,13 @@ public class ISBN10 {
 		return isbn.endsWith(checkDigit == 10 ? "X" : "" + checkDigit);
 	}
 
+	public char charAt(int index) throws IndexOutOfBoundsException{
+		if(index >= isbn.length) {
+			throw new IndexOutOfBoundsException("Index out of bounds!");
+		}
+		return isbn[index];
+	}
+
 	@Override
 	public String toString() {
 		return new String(isbn);

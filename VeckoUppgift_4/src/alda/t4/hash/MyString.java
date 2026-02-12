@@ -11,10 +11,17 @@ public class MyString {
 	public int length() {
 		return data.length;
 	}
+
+	public char charAt(int index) throws IndexOutOfBoundsException {
+		if(index >= data.length) {
+			throw new IndexOutOfBoundsException("Index out of bounds!");
+		}
+		return data[index];
+	}
 	
 	@Override
 	public String toString() {
 		return new String(data);
 	}
-	
+
 }

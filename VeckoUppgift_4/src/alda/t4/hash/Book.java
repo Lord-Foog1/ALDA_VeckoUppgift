@@ -47,6 +47,10 @@ public class Book {
 		this.price = price;
 	}
 
+	public int hashCode() {
+		return 0;
+	}
+
 	@Override
 	public String toString() {
 		return String.format("\"%s\" by %s Price: %d ISBN: %s lenght: %s", title, author, price, isbn,
