@@ -48,7 +48,13 @@ public class Book {
 	}
 
 	public int hashCode() {
-		return 0;
+		int hashVal = 0;
+
+		for(int i = 0; i < isbn.size(); i++) {
+			hashVal = hashVal + isbn.charAt(i);
+		}
+
+		return hashVal;
 	}
 
 	@Override

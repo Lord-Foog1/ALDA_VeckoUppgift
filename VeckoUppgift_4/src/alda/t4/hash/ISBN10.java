@@ -29,6 +29,10 @@ public class ISBN10 {
 		return isbn[index];
 	}
 
+	public int size() {
+		return isbn.length;
+	}
+
 	@Override
 	public String toString() {
 		return new String(isbn);
