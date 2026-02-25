@@ -47,14 +47,40 @@ public class Book {
 		this.price = price;
 	}
 
+	/**
+	 * Jag valde att göra hashmetoden på detta sett för att ha bra spridning genom att använda
+	 * primtalet 31, jag valde sedan att använda ett värder som kommer ofta var unikt och inte
+	 * kommer ändras, isbn det är en simple implementation men gör ändå jobbet på att sprida ut
+	 * värderna och vara baserat på något specifickt inom klassen.
+	 */
 	public int hashCode() {
 		int hashVal = 0;
 
 		for(int i = 0; i < isbn.size(); i++) {
-			hashVal = hashVal + isbn.charAt(i);
+			hashVal = 31 * hashVal + isbn.charAt(i);
 		}
 
 		return hashVal;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if(this == o) return true;
+		if(o == null || getClass() != o.getClass()) return false;
+
+		Book other = (Book) o;
+
+		if(this.isbn.size() != other.isbn.size()) {
+			return false;
+		}
+
+		for(int i = 0; i < isbn.size(); i++) {
+			if(this.isbn.charAt(i) != other.isbn.charAt(i)) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	@Override
