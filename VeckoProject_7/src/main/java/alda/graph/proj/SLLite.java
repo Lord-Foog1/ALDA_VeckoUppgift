@@ -1,100 +1,162 @@
 package alda.graph.proj;
 
+import java.time.LocalTime;
 import java.util.*;
+import java.io.*;
 
 public class SLLite {
-    Map<Node, Map<Node, Edge>> nodes = new HashMap<>();
+    //Key: stop_id, Value: Stop-objekt (Nodes)
+    Map<String, Node> stops = new HashMap<>();
 
-    public void add(Node node) {
-        nodes.putIfAbsent(node, new HashMap<>());
+    /** Skapar det objekt som finns i de filerna vi har blivit tilldelade
+     *
+     * @throws IOException
+     */
+    public void loadData() throws IOException {
+        BufferedReader brStops = new BufferedReader(new FileReader("./Files/sl_stops.txt"));
+        brStops.readLine();
+
+        String line;
+        while((line = brStops.readLine()) != null) {
+            String[] p = line.split(",");
+            stops.put(p[0], new Node(p[0], p[1], Double.parseDouble(p[2]), Double.parseDouble(p[3])));
+        }
+        brStops.close();
+
+        BufferedReader brTimes = new BufferedReader(new FileReader("./Files/sl_stop_times.txt"));
+        brTimes.readLine();
+
+        String lastTripId = "";
+        Node lastStop = null;
+        LocalTime lastDeparture = null;
+
+        while((line = brTimes.readLine()) != null) {
+            String[] p = line.split(",");
+            String tripId = p[0];
+            LocalTime arrTime = parseTime(p[1]);
+            LocalTime depTime = parseTime(p[2]);
+            Node currentStop = stops.get(p[3]);
+
+            if(tripId.equals(lastTripId) && lastStop != null) {
+                lastStop.departures.add(new Departure(currentStop, lastDeparture, arrTime, tripId));
+            }
+
+            lastTripId = tripId;
+            lastStop = currentStop;
+            lastDeparture = depTime;
+        }
+        brTimes.close();
     }
 
-    public void connect(Node node1, Node node2, double travelTime, double departureTime, double arrivalTime, String routeName) {
-        if(!nodes.containsKey(node1) || !nodes.containsKey(node2) || travelTime <= 0 || departureTime <= 0) {
+    /** Tar strängen av tid och omvandlar den till en LocalTime version.
+     *
+     * @param timeStr strängen av tid
+     * @return LocalTime version av tid delen av strängen
+     */
+    private LocalTime parseTime(String timeStr) {
+        String[] parts = timeStr.split(":");
+        int hour = Integer.parseInt(parts[0]) % 24;
+        return LocalTime.of(hour, Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
+    }
+
+    private long toMinutes(LocalTime time) {
+        return time.getHour() * 60 + time.getMinute();
+    }
+
+    public void findPath(String startId, String endId, LocalTime startTime) {
+        Node startNode = stops.get(startId);
+        Node endNode = stops.get(endId);
+
+        if(startNode == null || endNode == null) {
+            System.out.println("Start eller slut nod saknas.");
             return;
         }
 
-        nodes.get(node1).put(node2, new Edge(routeName, departureTime, travelTime, arrivalTime));
-        nodes.get(node2).put(node1, new Edge(routeName, departureTime, travelTime, arrivalTime));
-    }
+        PriorityQueue<SearchNode> openList = new PriorityQueue<>();
+        Map<Node, Double> bestCost = new HashMap<>();
 
-    public boolean isConnected(Node node1, Node node2) {
-        if(!nodes.containsKey(node1) || !nodes.containsKey(node2)) return false;
+        double startMin = toMinutes(startTime);
 
-        return nodes.get(node1).containsKey(node2);
-    }
-
-    public int getNumberOfNodes() {
-        return nodes.size();
-    }
-
-    public int getNumberOfEdges() {
-        int numEdge = 0;
-        for(Map<Node, Edge> neighbors : nodes.values()) {
-            numEdge += neighbors.size();
-        }
-        return numEdge/2;
-    }
-
-    public List<Node> findPath(Node start, Node end) {
-        for(Node n : nodes.keySet()) {
-            n.gScore = Double.POSITIVE_INFINITY;
-            n.fScore = Double.POSITIVE_INFINITY;
-            n.parent = null;
-        }
-
-        PriorityQueue<Node> openList = new PriorityQueue<>();
-        Set<Node> closedList = new HashSet<>();
-
-        start.gScore = 0;
-        start.fScore = calculateHeuristics(start, end);
-        openList.add(start);
+        openList.add(new SearchNode(startNode, startTime, 0, getHeuristic(startNode, endNode), null, null));
 
         while(!openList.isEmpty()) {
-            Node current = openList.poll();
+            SearchNode current = openList.poll();
 
-            if(current.equals(end)) {
-                return reconstructPath(end);
+            if(current.node.equals(endNode)) {
+                printPath(current);
+                return;
             }
 
-            closedList.add(current);
+            if(bestCost.containsKey(current.node) && bestCost.get(current.node) <= current.costFromStart) {
+                continue;
+            }
+            bestCost.put(current.node, current.costFromStart);
 
-            Map<Node, Edge> neighbors = nodes.get(current);
-            if(neighbors == null) continue;
+            for(Departure dep : current.node.departures) {
+                double depMin = toMinutes(dep.departureTime);
+                double arrMin = toMinutes(dep.arrivalTime);
+                double currentMin = toMinutes(current.currentTime);
 
-            for(Node neighbor : neighbors.keySet()) {
-                if(closedList.contains(neighbor)) continue;
-
-                Edge edge = neighbors.get(neighbor);
-
-                double tentativeG = current.gScore + edge.getTravelTime();
-
-                if(tentativeG < neighbor.gScore) {
-                    neighbor.parent = current;
-                    neighbor.gScore = tentativeG;
-                    neighbor.fScore = neighbor.gScore + calculateHeuristics(neighbor, end);
-
-                    if(!openList.contains(neighbor)) {
-                        openList.add(neighbor);
-                    }
+                if(depMin < currentMin) {
+                    depMin += 1440;
                 }
+                if(arrMin < depMin) {
+                    arrMin += 1440;
+                }
+
+                double travelDuration = arrMin - currentMin;
+                double newG = current.costFromStart + travelDuration;
+
+                double h = getHeuristic(dep.destination, endNode);
+                double f = newG + h;
+
+                LocalTime nextTime = dep.arrivalTime;
+
+                openList.add(new SearchNode(dep.destination, nextTime, newG, f, current, dep));
             }
         }
-
-        return Collections.emptyList();
+        System.out.println("Ingen väg Hittades");
     }
 
-    private List<Node> reconstructPath(Node endNode) {
-        List<Node> path = new ArrayList<>();
-        Node temp = endNode;
-        while(temp != null) {
-            path.add(0, temp);
-            temp = temp.parent;
+    private double getHeuristic(Node current, Node goal) {
+        double latDiff = current.latitude - goal.latitude;
+        double lonDiff = current.longitude - goal.longitude;
+        double distance = Math.sqrt(latDiff * latDiff + lonDiff * lonDiff) * 111;
+        return distance;
+    }
+
+    private void printPath(SearchNode target) {
+        if(target == null) {
+            System.out.println("Ingen väg hittades");
+            return;
         }
-        return path;
-    }
 
-    private double calculateHeuristics(Node a, Node b) {
-        return Math.abs(a.getX() - b.getX()) + Math.abs(a.getY() - b.getY());
+        List<SearchNode> path = new ArrayList<>();
+        SearchNode current = target;
+
+        while(current != null) {
+            path.add(current);
+            current = current.parent;
+        }
+
+        Collections.reverse(path);
+
+        System.out.println("Resplan hittad:");
+        System.out.println("-----------------------------------------");
+
+        for(int i = 0; i < path.size(); i++) {
+            SearchNode step = path.get(i);
+
+            if(i == 0) {
+                System.out.println("Starta vid: " + step.node.name + " kl. " + step.currentTime);
+            } else {
+                Departure dep = step.arrivalDeparture;
+                System.out.println("Kliv på trip " + dep.tripId + " vid " + path.get(i-1).node.name + " kl. " + dep.departureTime);
+
+                System.out.println("Ankom till: " + step.node.name + " kl. " + dep.arrivalTime);
+            }
+            System.out.println("--------------------------------------------");
+        }
+        System.out.println("Total restid: " + target.costFromStart + " minuter.");
     }
 }

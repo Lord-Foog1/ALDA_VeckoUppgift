@@ -1,0 +1,5 @@
+implementationen fungerar genom att gå igenom listan av punkter
+och gämföra alla punkter med varandra.
+Om punkterna är samma skippar vi och om punkternas distans mellan varandra är mindre än de förra
+med minst distans byter vi ut den variabeln med de nya värdet och sätter in punkterna på listan som returneras.
+Variabeln som håller koll på minsta distansen är först satt till infinity så att allt är mindre
