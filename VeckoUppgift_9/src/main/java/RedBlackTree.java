@@ -22,7 +22,7 @@
  * <p>
  * Modified with a working, but extremely inefficient implementation of remove,
  * and following Checkstyles styleguide.
- * 
+ *
  * @author Mark Allen Weiss
  */
 public class RedBlackTree<AnyType extends Comparable<? super AnyType>> {
@@ -62,7 +62,7 @@ public class RedBlackTree<AnyType extends Comparable<? super AnyType>> {
 
 	/**
 	 * Insert into the tree.
-	 * 
+	 *
 	 * @param item the item to insert.
 	 */
 	public void insert(AnyType item) {
@@ -99,84 +99,68 @@ public class RedBlackTree<AnyType extends Comparable<? super AnyType>> {
 	 * The current version works, but is extremely inefficient since it copies the
 	 * entire content for each remove operation. Your job is to replace it with an
 	 * efficient version that works on the tree directly.
-	 * 
+	 *
 	 * @param x the item to remove.
 	 */
 	public void remove(AnyType x) {
-		if(isEmpty() || !contains(x)) return;
+		if(isEmpty() || !contains(x)) { return; }
 
-		header.right.color = RED;
-		great = grand = parent = current;
 		current = header.right;
+		parent = grand = great = header;
+		RedBlackNode<AnyType> sibling = header.right;
 
-		while(true) {
-			RedBlackNode<AnyType> sibling = (parent.left == null) ? parent.right : parent.left;
-
-			if(current.right.color == BLACK && current.left.color == BLACK) {
-				if(sibling.left.color == BLACK && sibling.right.color == BLACK) {
-					parent.color = BLACK;
-					current.color = RED;
-					sibling.color = RED;
-				} else {
-					removalRotation(x, sibling);
-				}
-			}
-
+		while(compare(x, current) != 0) {
 			great = grand;
 			grand = parent;
 			parent = current;
+			sibling = (compare(x, current) < 0) ? current.right : current.left;
+			current = (compare(x, current) < 0) ? current.left : current.right;
+		}
 
-			if(x.compareTo(current.element) < 0) {
-				current = current.left;
+		if(current.left == nullNode && current.right == nullNode) {
+			if(parent.left == current) {
+				parent.left = nullNode;
+			} else if(parent.right == current) {
+				parent.right = nullNode;
 			}
-			else if(x.compareTo(current.element) > 0) {
-				current = current.right;
-			}
-			else {
-				if(current.left != nullNode && current.right != nullNode) {
-					RedBlackNode<AnyType> successor = current.right;
-					while(successor.left != nullNode) {
-						successor = successor.left;
-					}
+		} else if(current.left != nullNode && current.right != nullNode) {
+			RedBlackNode<AnyType> replacement = findMin(current.right);
 
-					current.element = successor.element;
-					x = successor.element;;
+			if(sibling.color == BLACK && sibling.left.color == RED || sibling.right.color == RED) {
+				if(parent.left == sibling && sibling.left.color == RED) {
 
-					current = current.right;
-				} else {
-					unlinkNode(current, parent);
-					break;
+				} else if(parent.left == sibling && sibling.right.color == RED) {
+
+				} else if(parent.right == sibling && sibling.right.color == RED) {
+
+				} else if(parent.right == sibling && sibling.left.color == RED) {
+
 				}
+			} else if(sibling.color == BLACK && sibling.left.color == BLACK && sibling.right.color == BLACK){
+
+			} else {
+
+			}
+
+		} else {
+			if(parent.left == current) {
+				parent.left = (current.right == nullNode) ? current.left : current.right;
+				parent.left.color = BLACK;
+			} else if(parent.right == current) {
+				parent.right = (current.left == nullNode) ? current.right : current.left;
+				parent.right.color = BLACK;
 			}
 		}
-		header.right.color = BLACK;
 	}
 
-	private void removalRotation(AnyType x, RedBlackNode<AnyType> sibling) {
-		if(x.compareTo(parent.element) < 0) {
-			if(sibling.left.color == RED) {
-				rotate(sibling.left.element, parent);
-			}
-			rotate(sibling.element, grand);
-		} else {
-			if(sibling.right.color == RED) {
-				rotate(sibling.right.element, parent);
-			}
-			rotate(sibling.element, grand);
+	private RedBlackNode<AnyType> findMin(RedBlackNode<AnyType> x) {
+		RedBlackNode<AnyType> min = x;
+
+		if(min.left != nullNode) {
+			min = findMin(min.left);
 		}
 
-		parent.color = BLACK;
-		current.color = RED;
-	}
-
-	private void unlinkNode(RedBlackNode<AnyType> current, RedBlackNode<AnyType> parent) {
-		RedBlackNode<AnyType> child = (current.left != nullNode) ? current.left : current.right;
-
-		if(parent.left == current) {
-			parent.left = child;
-		} else {
-			parent.right = child;
-		}
+		return min;
 	}
 
 	private void remove(RedBlackTree<AnyType> newTree, RedBlackNode<AnyType> node, AnyType x) {
@@ -191,7 +175,7 @@ public class RedBlackTree<AnyType extends Comparable<? super AnyType>> {
 
 	/**
 	 * Find the smallest item the tree.
-	 * 
+	 *
 	 * @return the smallest item or throw UnderflowExcepton if empty.
 	 */
 	public AnyType findMin() {
@@ -208,7 +192,7 @@ public class RedBlackTree<AnyType extends Comparable<? super AnyType>> {
 
 	/**
 	 * Find the largest item in the tree.
-	 * 
+	 *
 	 * @return the largest item or throw UnderflowExcepton if empty.
 	 */
 	public AnyType findMax() {
@@ -225,7 +209,7 @@ public class RedBlackTree<AnyType extends Comparable<? super AnyType>> {
 
 	/**
 	 * Find an item in the tree.
-	 * 
+	 *
 	 * @param x the item to search for.
 	 * @return true if x is found; otherwise false.
 	 */
@@ -262,7 +246,7 @@ public class RedBlackTree<AnyType extends Comparable<? super AnyType>> {
 
 	/**
 	 * Internal method to print a subtree in sorted order.
-	 * 
+	 *
 	 * @param t the node that roots the subtree.
 	 */
 	private void printTree(RedBlackNode<AnyType> t) {
@@ -275,7 +259,7 @@ public class RedBlackTree<AnyType extends Comparable<? super AnyType>> {
 
 	/**
 	 * Test if the tree is logically empty.
-	 * 
+	 *
 	 * @return true if empty, false otherwise.
 	 */
 	public boolean isEmpty() {
@@ -285,7 +269,7 @@ public class RedBlackTree<AnyType extends Comparable<? super AnyType>> {
 	/**
 	 * Internal routine that is called during an insertion if a node has two red
 	 * children. Performs flip and rotations.
-	 * 
+	 *
 	 * @param item the item being inserted.
 	 */
 	private void handleReorient(AnyType item) {
@@ -309,7 +293,7 @@ public class RedBlackTree<AnyType extends Comparable<? super AnyType>> {
 	 * Internal routine that performs a single or double rotation. Because the
 	 * result is attached to the parent, there are four cases. Called by
 	 * handleReorient.
-	 * 
+	 *
 	 * @param item   the item in handleReorient.
 	 * @param parent the parent of the root of the rotated subtree.
 	 * @return the root of the rotated subtree.
