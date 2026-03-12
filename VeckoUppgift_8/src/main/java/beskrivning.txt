@@ -1,5 +1,7 @@
-implementationen fungerar genom att gå igenom listan av punkter
-och gämföra alla punkter med varandra.
-Om punkterna är samma skippar vi och om punkternas distans mellan varandra är mindre än de förra
-med minst distans byter vi ut den variabeln med de nya värdet och sätter in punkterna på listan som returneras.
-Variabeln som håller koll på minsta distansen är först satt till infinity så att allt är mindre
+Högst upp har vi 2 metoder för att jämföra x respektivt y värde.
+I FindClosestPairOfPoints Metoden bärjar vi med att kolla att vi har nog
+med värden i listan för att äns köra funktionen.
+Efter det sorterar vi listan beroende på dess x-värde.
+Sedan delar vi listan i 2 delar och hittar det minsta av det två delarna.
+Efter det kollar vi stripen i mitten för att se om vi satte det 2 närmaste på olika sidor.
+sedan returnerar vi antingen denna bästa från mitten eller den bästa från en av sidorna.
