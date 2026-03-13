@@ -1,3 +1,5 @@
+// Oliver Nordlander olno1943
+
 // Feel free to use packages in your own environment, but remember to remove when handing it in
 
 //RedBlackTree class
@@ -103,64 +105,56 @@ public class RedBlackTree<AnyType extends Comparable<? super AnyType>> {
 	 * @param x the item to remove.
 	 */
 	public void remove(AnyType x) {
-		if(isEmpty() || !contains(x)) { return; }
-
-		current = header.right;
-		parent = grand = great = header;
-		RedBlackNode<AnyType> sibling = header.right;
-
-		while(compare(x, current) != 0) {
-			great = grand;
-			grand = parent;
-			parent = current;
-			sibling = (compare(x, current) < 0) ? current.right : current.left;
-			current = (compare(x, current) < 0) ? current.left : current.right;
+		if (isEmpty() || !contains(x)) {
+			return;
 		}
 
-		if(current.left == nullNode && current.right == nullNode) {
-			if(parent.left == current) {
-				parent.left = nullNode;
-			} else if(parent.right == current) {
-				parent.right = nullNode;
-			}
-		} else if(current.left != nullNode && current.right != nullNode) {
-			RedBlackNode<AnyType> replacement = findMin(current.right);
+		RedBlackNode<AnyType> v = findNode(x);
+		if (v == nullNode) return;
 
-			if(sibling.color == BLACK && sibling.left.color == RED || sibling.right.color == RED) {
-				if(parent.left == sibling && sibling.left.color == RED) {
+		RedBlackNode<AnyType> u = bstReplace(v);
 
-				} else if(parent.left == sibling && sibling.right.color == RED) {
+		boolean uvBlack = u.color == BLACK && v.color == BLACK;
 
-				} else if(parent.right == sibling && sibling.right.color == RED) {
+		RedBlackNode<AnyType> p = findParent(v);
 
-				} else if(parent.right == sibling && sibling.left.color == RED) {
-
-				}
-			} else if(sibling.color == BLACK && sibling.left.color == BLACK && sibling.right.color == BLACK){
-
+		if (u == nullNode) {
+			if (v == header.right) {
+				header.right = nullNode;
 			} else {
+				if (uvBlack) {
+					fixDoubleBlack(v);
+				} else {
+					RedBlackNode<AnyType> s = getSibling(v);
+					if (s != nullNode) s.color = RED;
+				}
 
+				if (isLeftChild(v)) p.left = nullNode;
+				else p.right = nullNode;
 			}
-
-		} else {
-			if(parent.left == current) {
-				parent.left = (current.right == nullNode) ? current.left : current.right;
-				parent.left.color = BLACK;
-			} else if(parent.right == current) {
-				parent.right = (current.left == nullNode) ? current.right : current.left;
-				parent.right.color = BLACK;
-			}
-		}
-	}
-
-	private RedBlackNode<AnyType> findMin(RedBlackNode<AnyType> x) {
-		RedBlackNode<AnyType> min = x;
-
-		if(min.left != nullNode) {
-			min = findMin(min.left);
+			return;
 		}
 
-		return min;
+		if (v.left == nullNode || v.right == nullNode) {
+			if (v == header.right) {
+				v.element = u.element;
+				v.left = v.right = nullNode;
+			} else {
+				if (isLeftChild(v)) p.left = u;
+				else p.right = u;
+
+				if (uvBlack) {
+					fixDoubleBlack(u);
+				} else {
+					u.color = BLACK;
+				}
+			}
+			return;
+		}
+
+		AnyType successorVal = u.element;
+		remove(successorVal);
+		v.element = successorVal;
 	}
 
 	private void remove(RedBlackTree<AnyType> newTree, RedBlackNode<AnyType> node, AnyType x) {
@@ -171,6 +165,108 @@ public class RedBlackTree<AnyType extends Comparable<? super AnyType>> {
 			remove(newTree, node.left, x);
 			remove(newTree, node.right, x);
 		}
+	}
+
+	private void fixDoubleBlack(RedBlackNode<AnyType> x) {
+		if (x == header.right) return;
+
+		RedBlackNode<AnyType> p = findParent(x);
+		RedBlackNode<AnyType> s = getSibling(x);
+
+		if (s == nullNode) { fixDoubleBlack(p); }
+		else {
+			if (s.color == RED) {
+				p.color = RED;
+				s.color = BLACK;
+				if (isLeftChild(s)) { rotateRight(p); }
+				else { rotateLeft(p); }
+				fixDoubleBlack(x);
+			} else {
+				if (s.left.color == RED || s.right.color == RED) {
+					if (s.left != nullNode && s.left.color == RED) {
+						if (isLeftChild(s)) {
+							s.left.color = s.color;
+							s.color = p.color;
+							rotateRight(p);
+						} else {
+							s.left.color = p.color;
+							rotateRight(s);
+							rotateLeft(p);
+						}
+					} else {
+						if (isLeftChild(s)) {
+							s.right.color = p.color;
+							rotateLeft(s);
+							rotateRight(p);
+						} else {
+							s.right.color = s.color;
+							s.color = p.color;
+							rotateLeft(p);
+						}
+					}
+					p.color = BLACK;
+				} else {
+					s.color = RED;
+					if (p.color == BLACK) fixDoubleBlack(p);
+					else p.color = BLACK;
+				}
+			}
+		}
+	}
+
+	private RedBlackNode<AnyType> bstReplace(RedBlackNode<AnyType> x) {
+		if (x.left != nullNode && x.right != nullNode) {
+			RedBlackNode<AnyType> temp = x.right;
+			while (temp.left != nullNode) temp = temp.left;
+			return temp;
+		}
+		return (x.left != nullNode) ? x.left : x.right;
+	}
+
+	private RedBlackNode<AnyType> findNode(AnyType x) {
+		RedBlackNode<AnyType> t = header.right;
+		while (t != nullNode) {
+			int cmp = compare(x, t);
+			if (cmp < 0) t = t.left;
+			else if (cmp > 0) t = t.right;
+			else return t;
+		}
+		return nullNode;
+	}
+
+	private RedBlackNode<AnyType> findParent(RedBlackNode<AnyType> child) {
+		if (child == header.right) return header;
+		RedBlackNode<AnyType> t = header.right;
+		RedBlackNode<AnyType> p = header;
+		while (t != nullNode && t != child) {
+			p = t;
+			t = (compare(child.element, t) < 0) ? t.left : t.right;
+		}
+		return p;
+	}
+
+	private RedBlackNode<AnyType> getSibling(RedBlackNode<AnyType> n) {
+		RedBlackNode<AnyType> p = findParent(n);
+		if (p == header) return nullNode;
+		return (n == p.left) ? p.right : p.left;
+	}
+
+	private boolean isLeftChild(RedBlackNode<AnyType> n) {
+		return n == findParent(n).left;
+	}
+
+	private void rotateLeft(RedBlackNode<AnyType> n) {
+		RedBlackNode<AnyType> p = findParent(n);
+		RedBlackNode<AnyType> newNode = rotateWithRightChild(n);
+		if (p.left == n) p.left = newNode;
+		else p.right = newNode;
+	}
+
+	private void rotateRight(RedBlackNode<AnyType> n) {
+		RedBlackNode<AnyType> p = findParent(n);
+		RedBlackNode<AnyType> newNode = rotateWithLeftChild(n);
+		if (p.left == n) p.left = newNode;
+		else p.right = newNode;
 	}
 
 	/**
